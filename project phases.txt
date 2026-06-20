@@ -1,0 +1,31 @@
+Phase 1 — Backend Foundation (where we are)
+  ├── Install dependencies
+  ├── Write domain models (AudioTrack, AudioSegment etc.)
+  └── Test that models work
+
+Phase 2 — Audio Pipeline
+  ├── Write the audio chunker (slices .wav into 3s pieces)
+  ├── Install CLAP model (the heavy AI part)
+  ├── Write embedding generator (audio chunk → vector)
+  └── Test with one real audio file
+
+Phase 3 — Database
+  ├── Set up ChromaDB locally
+  ├── Write the store function (save embeddings)
+  └── Write the retrieve function (search embeddings)
+
+Phase 4 — API
+  ├── Build FastAPI server
+  ├── Build /scan endpoint (triggers indexing)
+  └── Build /search endpoint (text query → results)
+
+Phase 5 — Desktop UI
+  ├── Set up Tauri + React
+  ├── Build search bar UI
+  ├── Build results display
+  └── Connect UI to FastAPI backend
+
+Phase 6 — Polish
+  ├── Error handling
+  ├── Progress bar for scanning
+  └── Final testing with real audio library

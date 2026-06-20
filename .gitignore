@@ -1,0 +1,19 @@
+# Python
+sonar_venv/
+__pycache__/
+*.pyc
+.env
+
+# ChromaDB data
+chroma_store/
+
+# HuggingFace model cache
+*.bin
+*.safetensors
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test audio files
+assets/
