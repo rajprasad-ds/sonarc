@@ -10,6 +10,10 @@ model.eval()
 print("CLAP model loaded successfully")
 
 
+def normalize(tensor: torch.Tensor) -> torch.Tensor:
+    return tensor / tensor.norm(dim=-1, keepdim=True)
+
+
 def get_audio_embedding(audio_chunk: np.ndarray, sample_rate: int) -> List[float]:
     inputs = processor(
         audio=audio_chunk.tolist(),
@@ -18,11 +22,18 @@ def get_audio_embedding(audio_chunk: np.ndarray, sample_rate: int) -> List[float
     )
 
     with torch.no_grad():
-        output = model.audio_model(**inputs)
+        output = model.get_audio_features(**inputs)
 
-    # pooler_output is the final summarized embedding
-    embedding = output.pooler_output.squeeze()
-    return embedding.tolist()
+    # extract tensor from output object
+    if hasattr(output, 'pooler_output'):
+        tensor = output.pooler_output
+    elif hasattr(output, 'last_hidden_state'):
+        tensor = output.last_hidden_state.mean(dim=1)
+    else:
+        tensor = output  # already a tensor
+
+    tensor = normalize(tensor)
+    return tensor.squeeze().tolist()
 
 
 def get_text_embedding(text: str) -> List[float]:
@@ -33,7 +44,14 @@ def get_text_embedding(text: str) -> List[float]:
     )
 
     with torch.no_grad():
-        output = model.text_model(**inputs)
+        output = model.get_text_features(**inputs)
 
-    embedding = output.pooler_output.squeeze()
-    return embedding.tolist()
+    if hasattr(output, 'pooler_output'):
+        tensor = output.pooler_output
+    elif hasattr(output, 'last_hidden_state'):
+        tensor = output.last_hidden_state.mean(dim=1)
+    else:
+        tensor = output  # already a tensor
+
+    tensor = normalize(tensor)
+    return tensor.squeeze().tolist()

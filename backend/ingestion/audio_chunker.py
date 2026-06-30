@@ -4,13 +4,11 @@ from typing import List, Tuple
 
 def load_audio(file_path: str) -> Tuple[np.ndarray, int]:
     """
-    Loads an audio file and returns the audio signal and sample rate.
-    audio signal = the actual sound data as numbers
-    sample rate  = how many numbers represent 1 second (usually 44100)
+    Loads audio and resamples to 48000 Hz
+    which is what CLAP model expects
     """
-    audio, sample_rate = librosa.load(file_path, sr=None, mono=True)
+    audio, sample_rate = librosa.load(file_path, sr=48000, mono=True)
     return audio, sample_rate
-
 
 def chunk_audio(
     audio: np.ndarray,

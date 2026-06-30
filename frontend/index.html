@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sonarc</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
+
+  :root {
+    --ink: #0B0E11;
+    --surface: #14181D;
+    --surface-raised: #181D23;
+    --line: #232931;
+    --wave: #3A4250;
+    --signal: #7CFFCB;
+    --signal-dim: rgba(124, 255, 203, 0.12);
+    --text: #E8ECEF;
+    --text-dim: #8993A1;
+    --text-faint: #545C66;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+  }
+
+  .shell {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ---- Header ---- */
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .brand-mark {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--signal);
+    box-shadow: 0 0 12px var(--signal);
+    flex-shrink: 0;
+  }
+  .brand h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+  .tagline {
+    color: var(--text-faint);
+    font-size: 12px;
+    margin: 0 0 36px 22px;
+    letter-spacing: 0.01em;
+  }
+
+  /* ---- Toolbar (folder scan) ---- */
+  .toolbar {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toolbar-label {
+    color: var(--text-faint);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+    width: 52px;
+  }
+  input[type="text"] {
+    background: var(--ink);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    flex: 1;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--signal);
+  }
+  input[type="text"]::placeholder { color: var(--text-faint); }
+
+  button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 9px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--surface-raised);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  button:hover { border-color: var(--text-dim); }
+  button.primary {
+    background: var(--signal);
+    color: var(--ink);
+    border-color: var(--signal);
+  }
+  button.primary:hover { opacity: 0.88; }
+  button:disabled { opacity: 0.4; cursor: default; }
+
+  /* ---- Search bar ---- */
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .search-row input[type="text"] {
+    font-size: 15px;
+    padding: 14px 16px;
+  }
+
+  .status-line {
+    font-size: 11px;
+    color: var(--text-faint);
+    min-height: 18px;
+    margin: 10px 2px 28px;
+    letter-spacing: 0.02em;
+  }
+  .status-line.active { color: var(--signal); }
+
+  /* ---- Results ---- */
+  .results { display: flex; flex-direction: column; gap: 14px; }
+
+  .track-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 18px 16px;
+  }
+
+  .track-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+  .track-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .track-meta {
+    font-size: 11px;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+
+  canvas.waveform {
+    width: 100%;
+    height: 72px;
+    display: block;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .regions-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 0 14px;
+  }
+  .region-chip {
+    font-size: 11px;
+    color: var(--signal);
+    background: var(--signal-dim);
+    border: 1px solid rgba(124,255,203,0.25);
+    padding: 4px 9px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .region-chip:hover { background: rgba(124,255,203,0.22); }
+  .region-chip.active {
+    background: var(--signal);
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .player-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .play-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 13px;
+    padding: 0;
+    transition: all 0.15s;
+  }
+  .play-btn:hover { border-color: var(--signal); color: var(--signal); }
+
+  .time-readout {
+    font-size: 11px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    min-width: 86px;
+  }
+
+  .open-explorer {
+    font-size: 11px;
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 6px 11px;
+  }
+  .open-explorer:hover { color: var(--text); border-color: var(--text-dim); }
+
+  /* ---- Empty / loading states ---- */
+  .empty-state {
+    text-align: center;
+    padding: 64px 20px;
+    color: var(--text-faint);
+    font-size: 13px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+  .empty-state .big { font-size: 28px; margin-bottom: 10px; opacity: 0.4; }
+
+  ::selection { background: var(--signal-dim); color: var(--signal); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <h1>sonarc</h1>
+  </div>
+  <p class="tagline">semantic audio search — find the moment, not the file</p>
+
+  <div class="toolbar">
+    <span class="toolbar-label">Folder</span>
+    <input type="text" id="folderInput" placeholder="C:\Users\rajpr\Desktop\CODE\sonarc\backend\assets">
+    <button id="scanBtn">Scan &amp; Index</button>
+  </div>
+
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="describe a sound… e.g. intense dramatic moment">
+    <button class="primary" id="searchBtn">Search</button>
+  </div>
+  <div class="status-line" id="statusLine"></div>
+
+  <div class="results" id="results"></div>
+
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+const statusLine   = document.getElementById('statusLine');
+const resultsEl    = document.getElementById('results');
+const searchInput  = document.getElementById('searchInput');
+const folderInput  = document.getElementById('folderInput');
+
+let currentAudio = null;     // the single shared <audio> element in use
+let currentPlayBtn = null;   // the play button currently showing "pause"
+
+function setStatus(text, active=false) {
+  statusLine.textContent = text;
+  statusLine.classList.toggle('active', active);
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ---- Scan ----
+document.getElementById('scanBtn').addEventListener('click', async () => {
+  const folder_path = folderInput.value.trim();
+  if (!folder_path) { setStatus("Enter a folder path first"); return; }
+
+  setStatus("Scanning & indexing… this can take a while on first run", true);
+  try {
+    const res = await fetch(`${API}/scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folder_path })
+    });
+    const data = await res.json();
+    setStatus(data.status === 'done' ? "Indexing complete" : "Scan finished");
+  } catch (e) {
+    setStatus("Could not reach the Sonarc backend — is it running?");
+  }
+});
+
+// ---- Search ----
+async function runSearch() {
+  const query = searchInput.value.trim();
+  if (!query) return;
+
+  setStatus(`Searching for "${query}"…`, true);
+  resultsEl.innerHTML = '';
+
+  try {
+    const res = await fetch(`${API}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    renderResults(data.results || []);
+  } catch (e) {
+    setStatus("Could not reach the Sonarc backend — is it running?");
+  }
+}
+document.getElementById('searchBtn').addEventListener('click', runSearch);
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+
+// ---- Render results ----
+function renderResults(tracks) {
+  if (tracks.length === 0) {
+    setStatus("No matches above threshold");
+    resultsEl.innerHTML = `
+      <div class="empty-state">
+        <div class="big">∿</div>
+        nothing matched closely enough — try describing the sound differently
+      </div>`;
+    return;
+  }
+
+  setStatus(`${tracks.length} track${tracks.length > 1 ? 's' : ''} matched`);
+
+  tracks.forEach((track, i) => {
+    const card = buildTrackCard(track, i);
+    resultsEl.appendChild(card);
+  });
+}
+
+function buildTrackCard(track, idx) {
+  const card = document.createElement('div');
+  card.className = 'track-card';
+
+  const audioUrl = `${API}/audio?path=${encodeURIComponent(track.file_path)}`;
+
+  card.innerHTML = `
+    <div class="track-head">
+      <div class="track-name">${track.track_name}</div>
+      <div class="track-meta">${track.regions.length} match${track.regions.length > 1 ? 'es' : ''}</div>
+    </div>
+    <canvas class="waveform" id="wave-${idx}"></canvas>
+    <div class="regions-row" id="chips-${idx}"></div>
+    <div class="player-row">
+      <button class="play-btn" id="play-${idx}">▶</button>
+      <div class="time-readout" id="time-${idx}">0:00 / 0:00</div>
+      <button class="open-explorer" id="open-${idx}">Open in Explorer</button>
+    </div>
+  `;
+
+  // defer wiring until inserted into DOM so canvas has real width
+  requestAnimationFrame(() => wireTrackCard(card, track, idx, audioUrl));
+
+  return card;
+}
+
+function wireTrackCard(card, track, idx, audioUrl) {
+  const canvas   = card.querySelector(`#wave-${idx}`);
+  const chipsEl  = card.querySelector(`#chips-${idx}`);
+  const playBtn  = card.querySelector(`#play-${idx}`);
+  const timeEl   = card.querySelector(`#time-${idx}`);
+  const openBtn  = card.querySelector(`#open-${idx}`);
+
+  const audio = new Audio(audioUrl);
+  let duration = 0;
+  let bars = null; // synthetic waveform bars, generated once duration is known
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+  }
+
+  function generateBars(n) {
+    // deterministic pseudo-random bars seeded by index, just for visual texture
+    let seed = idx * 7919 + 13;
+    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const arr = [];
+    let prev = 0.4;
+    for (let i = 0; i < n; i++) {
+      const target = 0.2 + rnd() * 0.8;
+      prev = prev * 0.6 + target * 0.4; // smooth it
+      arr.push(prev);
+    }
+    return arr;
+  }
+
+  function drawWaveform() {
+    resizeCanvas();
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    if (!bars) return;
+
+    const barW = w / bars.length;
+    const mid = h / 2;
+
+    bars.forEach((amp, i) => {
+      const t0 = (i / bars.length) * duration;
+      const t1 = ((i + 1) / bars.length) * duration;
+      const inRegion = track.regions.some(r => t1 >= r.start_time && t0 <= r.end_time);
+      const played = audio.currentTime >= t0;
+
+      ctx.fillStyle = inRegion
+        ? (played ? '#7CFFCB' : 'rgba(124,255,203,0.55)')
+        : (played ? '#5A6472' : '#3A4250');
+
+      const barH = Math.max(3, amp * mid * 0.92);
+      const x = i * barW;
+      ctx.fillRect(x + barW * 0.15, mid - barH, Math.max(1, barW * 0.7), barH * 2);
+    });
+  }
+
+  audio.addEventListener('loadedmetadata', () => {
+    duration = audio.duration;
+    bars = generateBars(180);
+    drawWaveform();
+    timeEl.textContent = `0:00 / ${formatTime(duration)}`;
+    buildChips();
+  });
+
+  function buildChips() {
+    chipsEl.innerHTML = '';
+    track.regions.forEach((r, ri) => {
+      const chip = document.createElement('div');
+      chip.className = 'region-chip';
+      chip.textContent = formatTime(r.start_time);
+      chip.title = `score ${r.score.toFixed(3)}`;
+      chip.addEventListener('click', () => {
+        audio.currentTime = r.start_time;
+        playAudio();
+        highlightChip(ri);
+      });
+      chipsEl.appendChild(chip);
+    });
+  }
+
+  function highlightChip(activeIdx) {
+    [...chipsEl.children].forEach((c, i) => c.classList.toggle('active', i === activeIdx));
+  }
+
+  function stopOtherAudio() {
+    if (currentAudio && currentAudio !== audio) {
+      currentAudio.pause();
+      if (currentPlayBtn) currentPlayBtn.textContent = '▶';
+    }
+  }
+
+  function playAudio() {
+    stopOtherAudio();
+    audio.play();
+    currentAudio = audio;
+    currentPlayBtn = playBtn;
+    playBtn.textContent = '⏸';
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      // if starting fresh (at 0), jump to best match first
+      if (audio.currentTime === 0 && track.regions.length) {
+        audio.currentTime = track.regions[0].start_time;
+        highlightChip(0);
+      }
+      playAudio();
+    } else {
+      audio.pause();
+      playBtn.textContent = '▶';
+    }
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    timeEl.textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
+    drawWaveform();
+  });
+  audio.addEventListener('ended', () => { playBtn.textContent = '▶'; });
+
+  canvas.addEventListener('click', (e) => {
+    if (!duration) return;
+    const rect = canvas.getBoundingClientRect();
+    const frac = (e.clientX - rect.left) / rect.width;
+    audio.currentTime = frac * duration;
+    playAudio();
+  });
+
+  openBtn.addEventListener('click', async () => { // calls /open-folder on the backend
+    await fetch(`${API}/open-folder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_path: track.file_path })
+    });
+  });
+
+  window.addEventListener('resize', drawWaveform);
+}
+</script>
+</body>
+</html>
